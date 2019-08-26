@@ -1,47 +1,46 @@
-# -*- coding: utf-8 -*-
-"""
-Spyder Editor
-
-This is a temporary script file.
-"""
-
 import bs4 as bs
 import urllib.request
+import textract
+import re
+import numpy as np
 
-# source page
-#source = urllib.request.urlopen('https://pythonprogramming.net/parsememcparseface/').read()
-source = urllib.request.urlopen('file:///C:/Users/user.T440_IT/Documents/Python%20Scripts/Dictionary.html').read()
-soup = bs.BeautifulSoup(source, 'lxml')
 
-my_dictionary = {
-        "words": []}
+def dictionary_parsing(file_path):
+    # source page
+    source = urllib.request.urlopen(file_path).read()
+    # create the bs object
+    soup = bs.BeautifulSoup(source, 'lxml')
 
-## title of the page
-#print(soup.title)
-#
-## get attributes:
-#print(soup.title.name)
-#
-## get values:
-#print(soup.title.string)
-#
-## beginning navigation:
-#print(soup.title.parent.name)
-#
-## getting specific values:
-#print(soup.p)
-#
-#print(soup.find_all('p'))
+    my_dictionary = {
+            "words": []}
 
-#for paragraph in soup.find_all('p'):
-#    #print(paragraph.string)
-#    print(str(paragraph.text))
+    for idx, s in enumerate(soup.find_all('strong')):
+        if idx > 1:
+            word = s.string
+            if word[:3] == 'to ':
+                word = word[3:]
+            my_dictionary["words"].append(word)
 
-# Another common task is to grab links. For example:
-for idx, s in enumerate(soup.find_all('strong')):
-    if idx > 1:
-        word = s.string
-        my_dictionary["words"].append(word)
+    return my_dictionary
 
-# Finally, you may just want to grab text.
-#print(soup.get_text())
+
+my_dict_path = 'file:///D:/Andrei/Programming/Python/Movie_script_analysis/Dictionary.html'
+my_dictionary = dictionary_parsing(my_dict_path)
+my_dictionary_words = np.array(my_dictionary['words'])
+
+popular_words_1000_path = 'file:///D:/Andrei/Programming/Python/Movie_script_analysis/1000_popular_words.html'
+pop_words = dictionary_parsing(popular_words_1000_path)
+pop_words = np.array(pop_words['words'])
+
+known_words = np.append(my_dictionary_words, pop_words)
+
+script_text = textract.process("D:\Andrei\Programming\Python\Movie_script_analysis\Blow_out_script.docx")
+words_in_text = re.findall(r'\w+', str(script_text))
+#words_in_text = re.split(r'[\n \t\r,.!?]', str(script_text))
+#words_in_text = [words_in_text[i] for i in range(len(words_in_text)) if len(words_in_text[i])<15]
+words_in_text = np.unique(np.array([words_in_text[i].lower() for i in range(len(words_in_text))]))
+words_in_text = np.array([words_in_text[i] for i in range(np.size(words_in_text)) if not words_in_text[i].isdigit()])
+
+known_words_in_text = np.array([words_in_text[i] for i in range(np.size(words_in_text)) if words_in_text[i] in known_words])
+unknown_words_in_text = np.array([words_in_text[i] for i in range(np.size(words_in_text)) if words_in_text[i] not in known_words])
+
