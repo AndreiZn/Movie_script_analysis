@@ -1,3 +1,3 @@
 # Movie_script_analysis
 
-Analyse whether a movie script has words that you don't know yet.
+Analyse a movie script on whether it has words that you don't know yet.
